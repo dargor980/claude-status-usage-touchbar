@@ -7,6 +7,7 @@ import ClaudeBarPresentation
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
+    private let isCISmokeRunEnabled: Bool
     private let viewModel: ClaudeBarViewModel
     private let touchBarController: TouchBarController
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -15,10 +16,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     var touchBar: NSTouchBar? { touchBarController.touchBar }
 
     override init() {
+        self.isCISmokeRunEnabled = ProcessInfo.processInfo.environment["CLAUDEBAR_CI_SMOKE_RUN"] == "1"
+
         let repository = ClaudeFilesystemActivityRepository()
-        let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         let policyProvider = JSONUsagePolicyProvider(
-            fileURL: root.appendingPathComponent("claudebar.config.json"),
+            fileURL: AppDelegate.resolveConfigurationURL(),
             fallback: DefaultUsagePolicyProvider()
         )
         let useCase = ObserveClaudeBarSnapshotUseCase(repository: repository, usagePolicyProvider: policyProvider)
@@ -38,6 +40,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard !isCISmokeRunEnabled else {
+            Task {
+                await viewModel.refresh()
+                NSApp.terminate(nil)
+            }
+            return
+        }
+
         NSApp.setActivationPolicy(.accessory)
 
         configureStatusItem()
@@ -121,5 +131,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         }
 
         NSWorkspace.shared.open(url)
+    }
+
+    private static func resolveConfigurationURL() -> URL {
+        let environment = ProcessInfo.processInfo.environment
+
+        if let overriddenPath = environment["CLAUDEBAR_CONFIG_PATH"], !overriddenPath.isEmpty {
+            return URL(fileURLWithPath: overriddenPath)
+        }
+
+        if
+            let bundledURL = Bundle.main.resourceURL?.appendingPathComponent("claudebar.config.json"),
+            FileManager.default.fileExists(atPath: bundledURL.path)
+        {
+            return bundledURL
+        }
+
+        let currentDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        return currentDirectory.appendingPathComponent("claudebar.config.json")
     }
 }
