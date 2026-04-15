@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     private let isCISmokeRunEnabled: Bool
     private let viewModel: ClaudeBarViewModel
     private let touchBarController: TouchBarController
+    private let frontmostApplicationMonitor: WorkspaceFrontmostApplicationMonitor
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var cancellables: Set<AnyCancellable> = []
     private var dashboardWindow: NSWindow?
@@ -28,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
 
         self.viewModel = viewModel
         self.touchBarController = TouchBarController(initialSnapshot: viewModel.snapshot)
+        self.frontmostApplicationMonitor = WorkspaceFrontmostApplicationMonitor()
 
         super.init()
 
@@ -37,6 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
                 self?.touchBarController.update(snapshot: snapshot)
             }
             .store(in: &cancellables)
+
+        frontmostApplicationMonitor.onChange = { [weak self] snapshot in
+            self?.viewModel.updateTouchBarExperience(frontmostApplication: snapshot)
+        }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -55,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         touchBarController.configure(onResume: { [weak self] in
             self?.resumeCurrentSession()
         })
+        frontmostApplicationMonitor.start()
 
         dashboardWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -66,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        frontmostApplicationMonitor.stop()
         viewModel.stop()
     }
 

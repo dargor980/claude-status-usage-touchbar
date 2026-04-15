@@ -1,5 +1,6 @@
 import SwiftUI
 import ClaudeBarDomain
+import ClaudeBarApplication
 
 public struct ClaudeBarDashboardView: View {
     @ObservedObject private var viewModel: ClaudeBarViewModel
@@ -18,6 +19,7 @@ public struct ClaudeBarDashboardView: View {
 
     public var body: some View {
         let snapshot = viewModel.snapshot
+        let touchBarExperience = viewModel.touchBarExperience
 
         VStack(alignment: .leading, spacing: 20) {
             header(snapshot: snapshot)
@@ -29,6 +31,7 @@ public struct ClaudeBarDashboardView: View {
 
             sessionCard(snapshot: snapshot)
             taskCard(snapshot: snapshot)
+            touchBarStrategyCard(touchBarExperience)
 
             if !snapshot.notices.isEmpty {
                 noticeCard(snapshot.notices)
@@ -188,6 +191,57 @@ public struct ClaudeBarDashboardView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
+    private func touchBarStrategyCard(_ experience: TouchBarExperienceSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Touch Bar real")
+                        .font(.title3.weight(.semibold))
+
+                    Text(experience.statusHeadline)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                decisionBadge(.recommended)
+            }
+
+            infoLine("App al frente", experience.frontmostApplication.localizedName)
+            infoLine("Modo actual", experience.currentImplementationTitle)
+
+            Text(experience.currentImplementationSummary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Text(experience.decisionSummary)
+                .font(.subheadline.weight(.medium))
+
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(experience.routeAssessments, id: \.route.rawValue) { route in
+                    routeAssessmentRow(route)
+                }
+            }
+
+            if !experience.nextImplementationSteps.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Siguiente corte")
+                        .font(.subheadline.weight(.semibold))
+
+                    ForEach(experience.nextImplementationSteps, id: \.self) { step in
+                        Text("• \(step)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
     private func noticeCard(_ notices: [String]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Notas")
@@ -220,6 +274,87 @@ public struct ClaudeBarDashboardView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(Color.white.opacity(0.85), in: Capsule())
+    }
+
+    private func routeAssessmentRow(_ route: TouchBarRouteAssessment) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top) {
+                Text(route.title)
+                    .font(.subheadline.weight(.semibold))
+
+                Spacer()
+
+                decisionBadge(route.decision)
+            }
+
+            Text(route.summary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Text("Persistencia: \(label(for: route.persistence)) · Riesgo: \(label(for: route.risk)) · Mantencion: \(label(for: route.maintenance))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(route.nextStep)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.45), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func decisionBadge(_ decision: TouchBarRouteDecision) -> some View {
+        Text(label(for: decision))
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(decisionColor(decision).opacity(0.16), in: Capsule())
+            .foregroundStyle(decisionColor(decision))
+    }
+
+    private func label(for decision: TouchBarRouteDecision) -> String {
+        switch decision {
+        case .recommended:
+            return "Recomendada"
+        case .deferred:
+            return "Postergada"
+        case .rejected:
+            return "Descartada"
+        }
+    }
+
+    private func label(for persistence: TouchBarPersistenceLevel) -> String {
+        switch persistence {
+        case .focusBound:
+            return "atada al foco"
+        case .partial:
+            return "parcial"
+        case .persistent:
+            return "persistente"
+        }
+    }
+
+    private func label(for level: TouchBarCostLevel) -> String {
+        switch level {
+        case .low:
+            return "bajo"
+        case .medium:
+            return "medio"
+        case .high:
+            return "alto"
+        }
+    }
+
+    private func decisionColor(_ decision: TouchBarRouteDecision) -> Color {
+        switch decision {
+        case .recommended:
+            return Color(red: 0.11, green: 0.53, blue: 0.28)
+        case .deferred:
+            return Color(red: 0.74, green: 0.46, blue: 0.09)
+        case .rejected:
+            return Color(red: 0.70, green: 0.17, blue: 0.15)
+        }
     }
 
     private func percent(_ value: Double) -> String {

@@ -44,6 +44,6 @@ Definir y probar una estrategia técnica realista para que la información de `c
 ## Estado actual
 
 - `Fase 1` funcional: completada
-- `Fase 2` Touch Bar persistente: en análisis
+- `Fase 2` Touch Bar persistente: decision tomada. Se recomienda bridge con herramienta de terceros y `AppKit` queda como fallback interno.
 - bloqueo principal: `AppKit` público no garantiza una barra persistente cuando otra app tiene el foco
 - spec aprobada para `usage` futuro: ejecutar `claude -p "/usage"` en modo headless, capturar stdout y parsearlo con Regex

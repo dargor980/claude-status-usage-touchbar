@@ -40,6 +40,24 @@ Separar estas fuentes evita mezclar concernes de cuota, sesion y task tracking.
 - La Touch Bar usa solo API publica de AppKit. Eso permite compilar y probar hoy, aunque no cubre todavia el caso “visible mientras VS Code esta al frente”.
 - El refresco es por polling simple. Cambiar a `FSEvents` o `DispatchSourceFileSystemObject` queda para una segunda iteracion si la frecuencia de 2 segundos no basta.
 
+## Decision de fase 2 para Touch Bar persistente
+
+La comparacion tecnica de fase 2 deja una conclusion clara:
+
+- `AppKit` publico se mantiene como espejo interno y fallback.
+- API privada experimental queda descartada por riesgo de plataforma y mantenibilidad.
+- companion app con automatizacion queda como patron de bridge, no como renderer final.
+- la siguiente implementacion persistente debe integrarse con una herramienta de terceros que ya controle la Touch Bar, empezando por `BetterTouchTool`.
+
+La consecuencia arquitectonica es simple: `claudeBar` pasa a ser proveedor de estado para dos superficies:
+
+- UI nativa propia
+- host persistente externo de Touch Bar
+
+El contrato de dominio no cambia. Lo que cambia es el adaptador de salida.
+
+Ver detalle en [TOUCH_BAR_STRATEGY.md](./TOUCH_BAR_STRATEGY.md).
+
 ## Fuente de usage aprobada para la siguiente iteracion
 
 La estrategia aprobada para consultar el `usage` real ya no sera inferirlo solo desde archivos locales. La siguiente fuente oficial a integrar sera:
@@ -74,5 +92,5 @@ Por eso la siguiente implementacion no deberia incrustar esta logica dentro de `
 Si la idea valida, el siguiente corte tecnico es extraer un `ClaudeBarAgent` local que entregue un contrato estable a la UI y permita integrar:
 
 - una fuente mas exacta de cuotas basada en `claude -p "/usage"`
-- una estrategia persistente para Touch Bar
+- una estrategia persistente para Touch Bar via bridge externo
 - pruebas de integracion independientes de AppKit

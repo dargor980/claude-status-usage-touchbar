@@ -31,6 +31,9 @@ Claude Code exposes valuable runtime context, but not in a form that is instantl
 > [!WARNING]
 > The app currently uses public `AppKit` APIs for Touch Bar support. That means the Touch Bar UI is tied to the app lifecycle and does not yet provide a guaranteed persistent bar while another app such as VS Code is in the foreground.
 
+> [!IMPORTANT]
+> The chosen Phase 2 direction is to keep the current `AppKit` Touch Bar as an internal fallback and deliver persistent visibility through a third-party Touch Bar host, starting with `BetterTouchTool`, while `claudeBar` remains the telemetry and action source.
+
 ## Getting Started
 
 ### Requirements
@@ -99,9 +102,10 @@ This structure keeps the parsing logic independent from the UI and leaves space 
 
 This is an MVP, not a finished utility. The current version validates the shape of the product and the viability of the local telemetry approach. The biggest open technical questions are:
 
-- how to deliver a truly persistent Touch Bar experience while another app owns focus
 - how to replace estimated usage with a more exact source of quota data
 - how to harden the local parsers with fixture-driven integration coverage
+
+The Touch Bar direction is now defined at the architecture level: bridge `claudeBar` into an external Touch Bar controller instead of pursuing a private API implementation inside the app.
 
 ## Roadmap
 
@@ -118,6 +122,7 @@ See the supporting design docs for the detailed breakdown:
 - [Data Model](./docs/DATA_MODEL.md)
 - [Contracts](./docs/CONTRACTS.md)
 - [Technical Roadmap](./docs/ROADMAP.md)
+- [Touch Bar Strategy](./docs/TOUCH_BAR_STRATEGY.md)
 
 ## Development Notes
 

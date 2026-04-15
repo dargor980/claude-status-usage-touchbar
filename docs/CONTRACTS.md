@@ -112,3 +112,17 @@ Respuesta sugerida para `GET /v1/status`:
 En esta version propuesta, el bloque `usage` deberia obtenerse preferentemente desde `claude -p "/usage"` y no desde inferencia por tokens.
 
 Fase 1 no implementa servidor HTTP; solo deja definido el contrato para desacoplar una futura extraccion de proceso.
+
+## Contrato de fase 2 para estrategia Touch Bar
+
+La evaluacion de Touch Bar persistente no debe expandir `ClaudeBarSnapshot`. En su lugar usa un contrato separado de aplicacion:
+
+- `FrontmostApplicationSnapshot`: identifica la app que hoy esta al frente
+- `TouchBarRouteAssessment`: compara rutas candidatas para persistencia
+- `TouchBarExperienceSnapshot`: resume modo actual, recomendacion y siguiente corte
+
+Responsabilidad:
+
+- exponer decision tecnica sin acoplarla al dominio
+- permitir que la UI nativa muestre el estado de la estrategia
+- dejar listo el reemplazo del renderer Touch Bar sin reescribir gauges, sesion o tarea

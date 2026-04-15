@@ -18,9 +18,9 @@ Objetivo: acercar el comportamiento al requisito de “visible mientras VS Code 
 
 Historias:
 
-1. Evaluar integracion con Touch Bar persistente sin depender de foco de ventana.
-2. Comparar tres rutas: API privada experimental, companion app con automatizacion, o integracion con herramienta de terceros.
-3. Mantener el contrato del dominio estable para no tocar la UI al cambiar la estrategia.
+1. Evaluar integracion con Touch Bar persistente sin depender de foco de ventana. Estado: resuelto. `AppKit` publico queda como fallback, no como solucion persistente.
+2. Comparar tres rutas: API privada experimental, companion app con automatizacion, o integracion con herramienta de terceros. Estado: resuelto. Se recomienda herramienta de terceros con bridge; API privada descartada; companion postergado como patron interno.
+3. Mantener el contrato del dominio estable para no tocar la UI al cambiar la estrategia. Estado: en curso. La UI interna conserva `ClaudeBarSnapshot` y la estrategia Touch Bar se modela por separado.
 
 ## Fase 3. Precisión de uso
 
