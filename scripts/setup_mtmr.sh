@@ -62,8 +62,7 @@ print(assets[0] if assets else '')
         fi
 
         echo "    Downloading: $url"
-        local tmp_dmg
-        tmp_dmg=$(mktemp /tmp/MTMR-XXXXXX.dmg)
+        local tmp_dmg="/tmp/claudebar_mtmr_$$.dmg"
         curl -fsSL -o "$tmp_dmg" "$url"
 
         local mount_point="/tmp/claudebar_mtmr_$$"
