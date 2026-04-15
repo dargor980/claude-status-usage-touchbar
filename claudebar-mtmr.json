@@ -1,0 +1,28 @@
+[
+  {
+    "_comment": "claudeBar — usage title + resume action",
+    "type": "shellScriptTitledButton",
+    "source": {
+      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_title.sh"
+    },
+    "refreshInterval": 2,
+    "align": "left",
+    "width": 220,
+    "bordered": false,
+    "action": {
+      "type": "shellScript",
+      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_resume.sh"
+    }
+  },
+  {
+    "_comment": "claudeBar — current task",
+    "type": "shellScriptTitledButton",
+    "source": {
+      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_task.sh"
+    },
+    "refreshInterval": 2,
+    "align": "left",
+    "width": 200,
+    "bordered": false
+  }
+]

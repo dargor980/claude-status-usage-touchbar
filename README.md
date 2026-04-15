@@ -43,6 +43,9 @@ Claude Code exposes valuable runtime context, but not in a form that is instantl
 > [!TIP]
 > Run `python3 scripts/claudebar_btt_generate_preset.py` to generate a ready-to-import `claudebar.bttpreset` with canonical widget UUIDs. Import the preset in BetterTouchTool and launch claudeBar — no env var setup required. Use `bash scripts/claudebar_install.sh` to register claudeBar as a login item.
 
+> [!TIP]
+> **Open-source alternative:** [MTMR (My TouchBar My Rules)](https://github.com/Toxblh/MTMR) is a free, open-source Touch Bar customizer that works without BetterTouchTool. Run `python3 scripts/claudebar_mtmr_generate_config.py` and follow [docs/MTMR_SETUP.md](./docs/MTMR_SETUP.md).
+
 ## Getting Started
 
 ### Requirements
@@ -139,6 +142,7 @@ See the supporting design docs for the detailed breakdown:
 - [Technical Roadmap](./docs/ROADMAP.md)
 - [Touch Bar Strategy](./docs/TOUCH_BAR_STRATEGY.md)
 - [BetterTouchTool Setup](./docs/BETTER_TOUCH_TOOL_SETUP.md)
+- [MTMR Setup (open source)](./docs/MTMR_SETUP.md)
 
 ## Development Notes
 
