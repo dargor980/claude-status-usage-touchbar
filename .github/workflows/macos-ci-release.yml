@@ -1,0 +1,141 @@
+name: macOS CI and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  guard-release-tag:
+    name: Validate Release Tag
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag format
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "Invalid tag format: ${GITHUB_REF_NAME}"
+            echo "Expected examples: v1.0, v1.1, v1.2.3"
+            exit 1
+          fi
+
+      - name: Validate tag commit belongs to main
+        run: |
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          if ! git branch -r --contains "$GITHUB_SHA" | grep -q "origin/main$"; then
+            echo "Tag ${GITHUB_REF_NAME} does not point to a commit contained in origin/main"
+            exit 1
+          fi
+
+  verify:
+    name: Verify
+    needs: guard-release-tag
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Smoke run app
+        env:
+          CLAUDEBAR_CI_SMOKE_RUN: "1"
+        run: |
+          BINARY_PATH="$(swift build -c release --show-bin-path)/claudebar"
+          "$BINARY_PATH"
+
+  build-release-binaries:
+    name: Build Release Binary (${{ matrix.arch }})
+    needs: verify
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            arch: arm64
+          - runner: macos-13
+            arch: x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Collect binary artifact
+        run: |
+          mkdir -p artifacts
+          cp "$(swift build -c release --show-bin-path)/claudebar" "artifacts/claudebar-${{ matrix.arch }}"
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: claudebar-${{ matrix.arch }}
+          path: artifacts/claudebar-${{ matrix.arch }}
+
+  package-release:
+    name: Package macOS Installer
+    needs: build-release-binaries
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download arm64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: claudebar-arm64
+          path: artifacts/arm64
+
+      - name: Download x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: claudebar-x64
+          path: artifacts/x64
+
+      - name: Package universal app and installer
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION="${VERSION#v}"
+          mkdir -p dist
+          scripts/package-macos-release.sh \
+            "$VERSION" \
+            "artifacts/arm64/claudebar-arm64" \
+            "artifacts/x64/claudebar-x64" \
+            dist
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: claudebar-release-assets
+          path: |
+            dist/claudeBar.app
+            dist/*.zip
+            dist/*.pkg
+
+      - name: Publish GitHub release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.pkg
