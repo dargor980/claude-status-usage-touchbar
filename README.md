@@ -34,6 +34,9 @@ Claude Code exposes valuable runtime context, but not in a form that is instantl
 > [!IMPORTANT]
 > The chosen Phase 2 direction is to keep the current `AppKit` Touch Bar as an internal fallback and deliver persistent visibility through a third-party Touch Bar host, starting with `BetterTouchTool`, while `claudeBar` remains the telemetry and action source.
 
+> [!TIP]
+> The app now writes a local Touch Bar bridge payload to `~/.claude/claudebar-touchbar.json`. Use the helper scripts in `scripts/` to wire that payload into BetterTouchTool widgets.
+
 ## Getting Started
 
 ### Requirements
@@ -58,6 +61,8 @@ open .build/scratch/arm64-apple-macosx/debug/claudebar
 ```
 
 The app launches as a small native companion with a dashboard window, a status bar item, and a Touch Bar provider backed by the same snapshot state.
+
+By default the dashboard no longer auto-opens on launch. It behaves as a menubar companion unless you set `CLAUDEBAR_OPEN_DASHBOARD_ON_LAUNCH=1`.
 
 ## Configuration
 
@@ -127,6 +132,7 @@ See the supporting design docs for the detailed breakdown:
 - [Contracts](./docs/CONTRACTS.md)
 - [Technical Roadmap](./docs/ROADMAP.md)
 - [Touch Bar Strategy](./docs/TOUCH_BAR_STRATEGY.md)
+- [BetterTouchTool Setup](./docs/BETTER_TOUCH_TOOL_SETUP.md)
 
 ## Development Notes
 

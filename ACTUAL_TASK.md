@@ -2,41 +2,42 @@
 
 ## Tarea activa
 
-**Fase 3: integrar una fuente mas exacta de usage para `claudeBar`**
+**Fase 2.1: bridge real a BetterTouchTool para Touch Bar persistente**
 
-La fase 2 ya dejo resuelta la estrategia de Touch Bar persistente. El siguiente gap del MVP es la precision del porcentaje:
+La estrategia de fase 2 ya quedo decidida: `claudeBar` no debe intentar dominar la Touch Bar por `AppKit` publico cuando otra app tiene el foco. El siguiente paso operativo es convertir esa decision en una integracion real.
 
-> mostrar el uso real de Claude con menos inferencia local y mas datos oficiales del propio Claude Code.
+> mostrar el estado de Claude en la Touch Bar del Mac mientras Terminal, VS Code o Cursor estan al frente.
 
 ## Objetivo de esta tarea
 
-Integrar una fuente exacta o casi exacta de usage sin romper el contrato del snapshot ni degradar la app cuando esa fuente no este disponible.
+Implementar un bridge utilizable con `BetterTouchTool`, manteniendo a `claudeBar` como proveedor de estado y dejando la ventana dashboard como herramienta de debug opcional.
 
 ## Alcance
 
-- ejecutar una consulta headless o equivalente para obtener `rate_limits`
-- parsear porcentaje de sesion, porcentaje semanal y resets
-- preferir esa fuente cuando sea valida
-- mantener fallback a `estimated` cuando falle o no exista
+- generar un payload estable para Touch Bar externa
+- escribir ese payload desde la app en cada refresh
+- incluir scripts listos para widgets y acciones en `BetterTouchTool`
+- documentar el setup minimo para que la Touch Bar realmente muestre `claudeBar`
 
 ## Fuera de alcance
 
-- eliminar por completo el fallback estimado
+- soporte MTMR completo
 - empaquetar la app como `.app`
 - soporte multi-sesión
-- cobertura de tests de fixtures reales
+- perfeccionar mas la precision de usage si eso retrasa el bridge
 
 ## Criterios de cierre
 
-- existe una fuente exacta integrada o una ruta soportada equivalente
-- la UI distingue entre exacto y estimado
-- queda registrado el fallback cuando no hay source exacta
-- la implementación y el contrato quedan reflejados en documentación
+- la app puede correr sin abrir el dashboard por defecto
+- existe un archivo de bridge estable para host externo
+- el repo incluye scripts de widget y accion para BetterTouchTool
+- la documentacion deja claro como verlo en la Touch Bar real
 
 ## Estado actual
 
 - `Fase 1` funcional: completada
 - `Fase 2` Touch Bar persistente: completada a nivel de decision tecnica
-- `Fase 3` usage exacto: en implementacion
-- hallazgo actual: en `Claude Code 2.1.108` del 15 de abril de 2026, `claude -p "/usage"` devuelve `Unknown command: /usage` en este entorno
-- ruta soportada actual: `rate_limits` expuesto a scripts de status line y fallback estimado si no hay captura disponible
+- `Fase 2.1` bridge BetterTouchTool: en implementacion
+- `Fase 3` usage exacto: postergada
+- limitacion actual: la Touch Bar publica de `AppKit` solo aparece cuando `claudeBar` es la app enfocada
+- ruta elegida: `BetterTouchTool` leyendo un payload local generado por `claudeBar`

@@ -8,8 +8,10 @@ import ClaudeBarPresentation
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     private let isCISmokeRunEnabled: Bool
+    private let shouldOpenDashboardOnLaunch: Bool
     private let viewModel: ClaudeBarViewModel
     private let touchBarController: TouchBarController
+    private let touchBarBridgeWriter: TouchBarBridgeFileWriter
     private let frontmostApplicationMonitor: WorkspaceFrontmostApplicationMonitor
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var cancellables: Set<AnyCancellable> = []
@@ -17,7 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     var touchBar: NSTouchBar? { touchBarController.touchBar }
 
     override init() {
-        self.isCISmokeRunEnabled = ProcessInfo.processInfo.environment["CLAUDEBAR_CI_SMOKE_RUN"] == "1"
+        let environment = ProcessInfo.processInfo.environment
+        self.isCISmokeRunEnabled = environment["CLAUDEBAR_CI_SMOKE_RUN"] == "1"
+        self.shouldOpenDashboardOnLaunch = environment["CLAUDEBAR_OPEN_DASHBOARD_ON_LAUNCH"] == "1"
 
         let repository = ClaudeFilesystemActivityRepository()
         let policyProvider = JSONUsagePolicyProvider(
@@ -39,6 +43,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
 
         self.viewModel = viewModel
         self.touchBarController = TouchBarController(initialSnapshot: viewModel.snapshot)
+        self.touchBarBridgeWriter = TouchBarBridgeFileWriter(
+            fileURL: AppDelegate.resolveTouchBarBridgeURL()
+        )
         self.frontmostApplicationMonitor = WorkspaceFrontmostApplicationMonitor()
 
         super.init()
@@ -47,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
             .receive(on: RunLoop.main)
             .sink { [weak self] snapshot in
                 self?.touchBarController.update(snapshot: snapshot)
+                try? self?.touchBarBridgeWriter.write(snapshot: snapshot)
             }
             .store(in: &cancellables)
 
@@ -73,8 +81,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         })
         frontmostApplicationMonitor.start()
 
-        dashboardWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if shouldOpenDashboardOnLaunch {
+            dashboardWindow?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
 
         Task {
             await viewModel.refresh()
@@ -177,5 +187,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         }
 
         return ClaudeFilesystemPaths.default().statusLineCaptureURL
+    }
+
+    private static func resolveTouchBarBridgeURL() -> URL {
+        let environment = ProcessInfo.processInfo.environment
+
+        if let overriddenPath = environment["CLAUDEBAR_TOUCHBAR_BRIDGE_PATH"], !overriddenPath.isEmpty {
+            return URL(fileURLWithPath: overriddenPath)
+        }
+
+        return ClaudeFilesystemPaths.default().touchBarBridgeURL
     }
 }

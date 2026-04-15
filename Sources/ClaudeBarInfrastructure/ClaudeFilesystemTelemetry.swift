@@ -10,6 +10,7 @@ public struct ClaudeFilesystemPaths {
     public let tasksURL: URL
     public let ideURL: URL
     public let statusLineCaptureURL: URL
+    public let touchBarBridgeURL: URL
 
     public init(root: URL) {
         self.root = root
@@ -19,6 +20,7 @@ public struct ClaudeFilesystemPaths {
         self.tasksURL = root.appendingPathComponent("tasks")
         self.ideURL = root.appendingPathComponent("ide")
         self.statusLineCaptureURL = root.appendingPathComponent("claudebar-statusline.json")
+        self.touchBarBridgeURL = root.appendingPathComponent("claudebar-touchbar.json")
     }
 
     public static func `default`() -> ClaudeFilesystemPaths {

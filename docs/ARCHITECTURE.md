@@ -58,6 +58,16 @@ El contrato de dominio no cambia. Lo que cambia es el adaptador de salida.
 
 Ver detalle en [TOUCH_BAR_STRATEGY.md](./TOUCH_BAR_STRATEGY.md).
 
+### Corte implementado
+
+La primera implementacion concreta del host externo usa un bridge por archivo:
+
+- `claudeBar` escribe `~/.claude/claudebar-touchbar.json`
+- `BetterTouchTool` consume ese payload via widgets de shell script
+- las acciones del widget leen el mismo payload para abrir `Resume`
+
+Eso permite avanzar sin acoplar la app a AppleScript o UUIDs de widgets especificos.
+
 ## Fuente de usage implementada para la siguiente iteracion
 
 La app ahora intenta una fuente exacta separada del parser de filesystem. La prioridad actual es:
