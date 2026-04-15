@@ -42,7 +42,7 @@ APP_BINARY="$APP_PATH/Contents/MacOS/claudebar"
 # ---------------------------------------------------------------------------
 # Build
 # ---------------------------------------------------------------------------
-echo "==> Building claudeBar…"
+echo "==> Building claudeBar..."
 CLANG_MODULE_CACHE_PATH="$REPO_DIR/.build/module-cache" \
 SWIFTPM_MODULECACHE_OVERRIDE="$REPO_DIR/.build/module-cache" \
 /Library/Developer/CommandLineTools/usr/bin/swift build \
@@ -56,7 +56,7 @@ fi
 # ---------------------------------------------------------------------------
 # Create app bundle
 # ---------------------------------------------------------------------------
-echo "==> Creating app bundle at $APP_PATH…"
+echo "==> Creating app bundle at $APP_PATH..."
 mkdir -p "$APP_DIR"
 rm -rf "$APP_PATH"
 "$REPO_DIR/scripts/build-app-bundle.sh" "$BINARY_PATH" "$APP_DIR" "0.1.0"
@@ -126,7 +126,7 @@ echo "==> LaunchAgent written to $PLIST_PATH"
 # Load / reload agent
 # ---------------------------------------------------------------------------
 if launchctl list "$LABEL" &>/dev/null; then
-  echo "==> Reloading existing agent…"
+  echo "==> Reloading existing agent..."
   launchctl unload "$PLIST_PATH" 2>/dev/null || true
 fi
 
