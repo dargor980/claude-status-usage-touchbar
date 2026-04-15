@@ -45,11 +45,53 @@ MTMR_APP="/Applications/MTMR.app"
 if [[ -d "$MTMR_APP" ]]; then
     echo "    MTMR already installed at $MTMR_APP"
 else
-    if ! command -v brew &>/dev/null; then
-        echo "ERROR: Homebrew not found. Install it from https://brew.sh and re-run." >&2
-        exit 1
+    _install_mtmr_from_github() {
+        echo "    Fetching latest MTMR release from GitHub..."
+        local url
+        url=$(curl -fsSL "https://api.github.com/repos/Toxblh/MTMR/releases/latest" \
+              | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assets = [a['browser_download_url'] for a in data.get('assets', [])
+          if a['name'].lower().endswith('.dmg')]
+print(assets[0] if assets else '')
+")
+        if [[ -z "$url" ]]; then
+            echo "ERROR: could not find a DMG in the latest MTMR release." >&2
+            return 1
+        fi
+
+        echo "    Downloading: $url"
+        local tmp_dmg
+        tmp_dmg=$(mktemp /tmp/MTMR-XXXXXX.dmg)
+        curl -fsSL -o "$tmp_dmg" "$url"
+
+        echo "    Mounting DMG..."
+        local mount_out
+        mount_out=$(hdiutil attach "$tmp_dmg" -nobrowse -quiet)
+        local mount_point
+        mount_point=$(echo "$mount_out" | awk '/Apple_HFS/{print $NF}')
+
+        echo "    Copying MTMR.app to /Applications..."
+        cp -R "$mount_point/MTMR.app" /Applications/
+
+        hdiutil detach "$mount_point" -quiet
+        rm -f "$tmp_dmg"
+        echo "    MTMR installed from GitHub."
+    }
+
+    # Try brew cask first; fall back to direct GitHub download if it fails
+    # (the official brew cask downloads from mtmr.app which has SSL issues).
+    if command -v brew &>/dev/null; then
+        echo "    Trying brew install --cask mtmr..."
+        if ! brew install --cask mtmr 2>/dev/null; then
+            echo "    brew cask failed (SSL issue with mtmr.app), trying GitHub..."
+            _install_mtmr_from_github
+        fi
+    else
+        echo "    brew not found, trying GitHub directly..."
+        _install_mtmr_from_github
     fi
-    brew install --cask mtmr
 fi
 
 # ---------------------------------------------------------------------------
