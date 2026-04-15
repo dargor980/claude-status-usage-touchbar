@@ -48,4 +48,7 @@ Implementar un bridge utilizable con `BetterTouchTool`, manteniendo a `claudeBar
 - `Fase 3` usage exacto: postergada
 - limitacion actual: la Touch Bar publica de `AppKit` solo aparece cuando `claudeBar` es la app enfocada
 - ruta elegida: `BetterTouchTool` leyendo un payload local generado por `claudeBar`
-- siguiente corte probable: packaging como `.app` o validacion manual del preset en BTT real
+- `Fase 2.3` packaging como `.app`: completada
+- `build-app-bundle.sh` incluye scripts Python, preset, `LSUIElement` y `NSAppleEventsUsageDescription`
+- `claudebar_install.sh` crea bundle + launchd agent en un paso
+- siguiente corte: validacion manual del preset y flujo completo en BetterTouchTool real

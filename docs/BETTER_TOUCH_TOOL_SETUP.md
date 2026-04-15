@@ -27,12 +27,15 @@ python3 scripts/claudebar_btt_generate_preset.py
 # 2. Importar en BetterTouchTool
 #    Preferences → Presets → Import Preset → seleccionar claudebar.bttpreset
 
-# 3. Iniciar claudeBar como login item (opcional)
+# 3. Instalar como login item (crea ~/Applications/claudeBar.app + launchd agent)
 bash scripts/claudebar_install.sh
 
-# 4. O simplemente ejecutar:
-.build/scratch/arm64-apple-macosx/debug/claudebar
+# O instalar en otra carpeta:
+# bash scripts/claudebar_install.sh --app-dir /Applications
 ```
+
+`claudebar_install.sh` compila, crea el bundle y carga el agente launchd en un paso.  
+A partir del proximo login, `claudeBar` arranca automaticamente.
 
 Los dos widgets aparecen en la Touch Bar inmediatamente.  
 `claudeBar` empuja actualizaciones directas a los widgets en cada refresh.
@@ -122,16 +125,22 @@ Si la sesion tiene `remoteURL`, abre Claude Code en esa sesion. Si no existe, la
 
 ## Modo de arranque recomendado
 
-Ejecutar `claudeBar` sin dashboard visible:
+Usar el instalador para crear el bundle y el login item de una vez:
 
 ```bash
-/Users/germancontreras/claude-status-usage-touchbar/.build/scratch/arm64-apple-macosx/debug/claudebar
+bash scripts/claudebar_install.sh
 ```
 
-Si quieres volver a levantar el panel espejo al iniciar:
+Para desarrollo rapido sin bundle:
 
 ```bash
-CLAUDEBAR_OPEN_DASHBOARD_ON_LAUNCH=1 /Users/germancontreras/claude-status-usage-touchbar/.build/scratch/arm64-apple-macosx/debug/claudebar
+.build/scratch/arm64-apple-macosx/debug/claudebar
+```
+
+Si quieres abrir el dashboard al iniciar:
+
+```bash
+CLAUDEBAR_OPEN_DASHBOARD_ON_LAUNCH=1 .build/scratch/arm64-apple-macosx/debug/claudebar
 ```
 
 ## Notas
