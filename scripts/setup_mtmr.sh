@@ -66,17 +66,15 @@ print(assets[0] if assets else '')
         tmp_dmg=$(mktemp /tmp/MTMR-XXXXXX.dmg)
         curl -fsSL -o "$tmp_dmg" "$url"
 
-        echo "    Mounting DMG..."
-        local mount_out
-        mount_out=$(hdiutil attach "$tmp_dmg" -nobrowse -quiet)
-        local mount_point
-        mount_point=$(echo "$mount_out" | awk '/Apple_HFS/{print $NF}')
+        local mount_point="/tmp/claudebar_mtmr_$$"
+        echo "    Mounting DMG at $mount_point..."
+        hdiutil attach "$tmp_dmg" -mountpoint "$mount_point" -nobrowse -quiet
 
         echo "    Copying MTMR.app to /Applications..."
         cp -R "$mount_point/MTMR.app" /Applications/
 
-        hdiutil detach "$mount_point" -quiet
-        rm -f "$tmp_dmg"
+        hdiutil detach "$mount_point" -quiet 2>/dev/null || true
+        rm -rf "$mount_point" "$tmp_dmg"
         echo "    MTMR installed from GitHub."
     }
 
