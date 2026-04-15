@@ -1,0 +1,303 @@
+import SwiftUI
+import ClaudeBarDomain
+
+public struct ClaudeBarDashboardView: View {
+    @ObservedObject private var viewModel: ClaudeBarViewModel
+    private let onRefresh: () -> Void
+    private let onResume: () -> Void
+
+    public init(
+        viewModel: ClaudeBarViewModel,
+        onRefresh: @escaping () -> Void,
+        onResume: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.onRefresh = onRefresh
+        self.onResume = onResume
+    }
+
+    public var body: some View {
+        let snapshot = viewModel.snapshot
+
+        VStack(alignment: .leading, spacing: 20) {
+            header(snapshot: snapshot)
+
+            HStack(spacing: 16) {
+                gaugeCard(snapshot.currentSession)
+                gaugeCard(snapshot.currentWeek)
+            }
+
+            sessionCard(snapshot: snapshot)
+            taskCard(snapshot: snapshot)
+
+            if !snapshot.notices.isEmpty {
+                noticeCard(snapshot.notices)
+            }
+        }
+        .padding(24)
+        .frame(minWidth: 760, minHeight: 520)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.95, green: 0.97, blue: 0.99),
+                    Color(red: 0.90, green: 0.94, blue: 0.97),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+    }
+
+    private func header(snapshot: ClaudeBarSnapshot) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("claudeBar")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                Text("Monitor local para Touch Bar sobre sesiones de Claude Code CLI.")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                Text("Actualizado \(relative(snapshot.observedAt))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                Button("Refresh", action: onRefresh)
+                    .buttonStyle(.bordered)
+
+                Button("Resume", action: onResume)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(snapshot.session?.remoteURL == nil)
+            }
+        }
+    }
+
+    private func gaugeCard(_ gauge: UsageGauge) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(gauge.title)
+                    .font(.title3.weight(.semibold))
+
+                Spacer()
+
+                accuracyBadge(gauge.accuracy)
+            }
+
+            ProgressView(value: gauge.clampedPercentage)
+                .tint(Color(red: 0.08, green: 0.43, blue: 0.84))
+                .scaleEffect(x: 1, y: 1.6, anchor: .center)
+
+            HStack(alignment: .lastTextBaseline) {
+                Text(percent(gauge.clampedPercentage))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+
+                Text("\(gauge.consumedTokens.formatted()) / \(max(gauge.budgetTokens, 0).formatted()) tokens")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(resetText(gauge.resetAt))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func sessionCard(snapshot: ClaudeBarSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Sesion observada")
+                .font(.title3.weight(.semibold))
+
+            if let session = snapshot.session {
+                infoLine("Session ID", session.sessionId)
+                infoLine("Proyecto", session.projectPath)
+                infoLine("CWD", session.currentWorkingDirectory)
+                infoLine("IDE", session.ideName ?? "No detectado")
+                infoLine("Estado", session.isActive ? "Activa" : "Sin actividad reciente")
+                infoLine("Inicio", absolute(session.startedAt))
+                infoLine("Ultima actividad", relative(session.lastActivityAt))
+            } else {
+                Text("No hay una sesion reciente disponible.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func taskCard(snapshot: ClaudeBarSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tarea")
+                .font(.title3.weight(.semibold))
+
+            if let task = snapshot.task {
+                HStack {
+                    Circle()
+                        .fill(task.state == .running ? Color.green : Color.gray)
+                        .frame(width: 10, height: 10)
+
+                    Text(task.title)
+                        .font(.headline)
+
+                    Spacer()
+
+                    Text(task.state.rawValue.capitalized)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                if let detail = task.detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+
+                if !task.steps.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Pasos recientes")
+                            .font(.subheadline.weight(.semibold))
+
+                        ForEach(task.steps.prefix(3), id: \.self) { step in
+                            Text("• \(step)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                if let finishedAt = task.finishedAt, task.state == .completed {
+                    Text("Finalizada \(relative(finishedAt))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text("Sin tarea activa ni finalizacion reciente.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func noticeCard(_ notices: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Notas")
+                .font(.headline)
+
+            ForEach(notices, id: \.self) { notice in
+                Text("• \(notice)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func infoLine(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.body)
+        }
+    }
+
+    private func accuracyBadge(_ accuracy: UsageAccuracy) -> some View {
+        Text(accuracy.rawValue.capitalized)
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.85), in: Capsule())
+    }
+
+    private func percent(_ value: Double) -> String {
+        value.formatted(.percent.precision(.fractionLength(0)))
+    }
+
+    private func resetText(_ date: Date?) -> String {
+        guard let date else { return "Sin fecha de reinicio" }
+        return "Reinicia \(relative(date))"
+    }
+
+    private func relative(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    private func absolute(_ date: Date) -> String {
+        date.formatted(date: .abbreviated, time: .shortened)
+    }
+}
+
+public struct TouchBarStripView: View {
+    private let snapshot: ClaudeBarSnapshot
+    private let onResume: () -> Void
+
+    public init(snapshot: ClaudeBarSnapshot, onResume: @escaping () -> Void) {
+        self.snapshot = snapshot
+        self.onResume = onResume
+    }
+
+    public var body: some View {
+        HStack(spacing: 12) {
+            miniMeter(snapshot.currentSession)
+            miniMeter(snapshot.currentWeek)
+
+            Button(action: onResume) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(buttonTitle)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+
+                    Text(buttonSubtitle)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(red: 0.92, green: 0.95, blue: 0.98))
+    }
+
+    private func miniMeter(_ gauge: UsageGauge) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(gauge.title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+            ProgressView(value: gauge.clampedPercentage)
+                .frame(width: 120)
+            Text(gauge.clampedPercentage.formatted(.percent.precision(.fractionLength(0))))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var buttonTitle: String {
+        guard let task = snapshot.task else { return "Resume" }
+        return task.state == .running ? "Resume: \(task.title)" : "Done"
+    }
+
+    private var buttonSubtitle: String {
+        guard let task = snapshot.task else { return "Abrir panel" }
+        return task.detail ?? "Abrir panel"
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "sessionTokenBudget": 2000000,
+  "sessionWindowHours": 5,
+  "weeklyTokenBudget": 12000000,
+  "weeklyResetWeekday": 2
+}
+
