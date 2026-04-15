@@ -26,7 +26,7 @@ The MVP focuses on four things:
 Claude Code exposes valuable runtime context, but not in a form that is instantly visible while coding. The goal of claudeBar is to reduce that friction and test whether a glanceable, native macOS companion is enough to make Claude usage feel more operational and less opaque.
 
 > [!NOTE]
-> The current version does **not** reproduce the exact `/usage` percentage shown by Claude. It estimates usage from locally observed token data and configurable budgets because Claude does not expose a stable local source for the exact percentage.
+> The app now supports an exact-usage path when it can read a local `rate_limits` capture from Claude Code status line scripts. If that source is missing or invalid, it falls back to estimated usage from local token telemetry and configured budgets.
 
 > [!WARNING]
 > The app currently uses public `AppKit` APIs for Touch Bar support. That means the Touch Bar UI is tied to the app lifecycle and does not yet provide a guaranteed persistent bar while another app such as VS Code is in the foreground.
@@ -86,6 +86,8 @@ claudeBar reads from local Claude files instead of scraping UI output:
 
 The repository converts those sources into a single `ClaudeBarSnapshot`, which the app refreshes on a short polling interval and renders consistently across the desktop panel and Touch Bar UI.
 
+For more exact usage, the app can also read `~/.claude/claudebar-statusline.json` when you wire Claude Code status line to the helper script at [scripts/claudebar_statusline_capture.py](/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_statusline_capture.py:1). The capture path can be overridden with `CLAUDEBAR_STATUSLINE_CAPTURE_PATH`.
+
 ## Architecture
 
 The codebase is intentionally split by responsibility:
@@ -106,6 +108,8 @@ This is an MVP, not a finished utility. The current version validates the shape 
 - how to harden the local parsers with fixture-driven integration coverage
 
 The Touch Bar direction is now defined at the architecture level: bridge `claudeBar` into an external Touch Bar controller instead of pursuing a private API implementation inside the app.
+
+As of `Claude Code 2.1.108` on April 15, 2026, `claude -p "/usage"` returns `Unknown command: /usage` in this environment, so the current exact-usage integration prefers status line `rate_limits` capture and keeps the headless `/usage` probe as an experimental fallback.
 
 ## Roadmap
 

@@ -9,6 +9,7 @@ public struct ClaudeFilesystemPaths {
     public let projectsURL: URL
     public let tasksURL: URL
     public let ideURL: URL
+    public let statusLineCaptureURL: URL
 
     public init(root: URL) {
         self.root = root
@@ -17,6 +18,7 @@ public struct ClaudeFilesystemPaths {
         self.projectsURL = root.appendingPathComponent("projects")
         self.tasksURL = root.appendingPathComponent("tasks")
         self.ideURL = root.appendingPathComponent("ide")
+        self.statusLineCaptureURL = root.appendingPathComponent("claudebar-statusline.json")
     }
 
     public static func `default`() -> ClaudeFilesystemPaths {
@@ -110,7 +112,6 @@ public final class ClaudeFilesystemActivityRepository: ClaudeActivityRepository 
         )
 
         notices.append(contentsOf: telemetry.notices)
-        notices.append("Claude no expone localmente el porcentaje exacto de /usage; esta barra usa presupuestos configurables y tokens observados.")
 
         let weeklyTokens = loadWeeklyTokens(now: now, additionalTodayTokens: telemetry.additionalTodayTokensForWeek)
         let task = loadPlannedTask(sessionId: historyEntry.sessionId, steps: telemetry.recentSteps) ?? telemetry.runningBackgroundTask

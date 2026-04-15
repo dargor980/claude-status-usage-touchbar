@@ -99,7 +99,7 @@ public struct ClaudeBarDashboardView: View {
                 Text(percent(gauge.clampedPercentage))
                     .font(.system(size: 28, weight: .bold, design: .rounded))
 
-                Text("\(gauge.consumedTokens.formatted()) / \(max(gauge.budgetTokens, 0).formatted()) tokens")
+                Text(gaugeDetailText(gauge))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -359,6 +359,14 @@ public struct ClaudeBarDashboardView: View {
 
     private func percent(_ value: Double) -> String {
         value.formatted(.percent.precision(.fractionLength(0)))
+    }
+
+    private func gaugeDetailText(_ gauge: UsageGauge) -> String {
+        if gauge.accuracy == .exact || gauge.budgetTokens <= 0 {
+            return "Porcentaje exacto desde Claude Code"
+        }
+
+        return "\(gauge.consumedTokens.formatted()) / \(max(gauge.budgetTokens, 0).formatted()) tokens"
     }
 
     private func resetText(_ date: Date?) -> String {

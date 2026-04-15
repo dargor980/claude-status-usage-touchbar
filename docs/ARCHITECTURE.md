@@ -58,34 +58,34 @@ El contrato de dominio no cambia. Lo que cambia es el adaptador de salida.
 
 Ver detalle en [TOUCH_BAR_STRATEGY.md](./TOUCH_BAR_STRATEGY.md).
 
-## Fuente de usage aprobada para la siguiente iteracion
+## Fuente de usage implementada para la siguiente iteracion
 
-La estrategia aprobada para consultar el `usage` real ya no sera inferirlo solo desde archivos locales. La siguiente fuente oficial a integrar sera:
+La app ahora intenta una fuente exacta separada del parser de filesystem. La prioridad actual es:
 
-- ejecutar `claude -p "/usage"` desde la app en modo headless
-- capturar el texto de `stdout`
-- extraer porcentaje de sesion, porcentaje semanal y ventanas de reset mediante `Regex`
+1. leer una captura local de `rate_limits` generada por un script de `statusline`
+2. intentar `claude -p "/usage"` como sonda experimental
+3. degradar a porcentajes estimados por politica cuando ninguna fuente exacta es valida
 
-Esto implica un nuevo adaptador de infraestructura, por ejemplo `ClaudeHeadlessUsageProvider`, aislado del resto del parser de filesystem.
+Esto mantiene el adaptador de usage aislado del parser de filesystem y evita mezclar telemetria observada con cuota exacta.
 
 ### Motivacion
 
-- usa la propia CLI de Claude Code como fuente de verdad operativa
+- usa una superficie oficial reciente de Claude Code para `rate_limits`
 - evita seguir adivinando el porcentaje desde tokens acumulados
 - mantiene a `claudeBar` desacoplado de una UI visual o scraping de pantalla
 
 ### Limitacion conocida
 
-Hoy el comando no expone un `--json` nativo para este caso, por lo que el parseo sera necesariamente textual y debe considerarse fragil ante cambios de formato.
+En esta maquina, con `Claude Code 2.1.108` del 15 de abril de 2026, `claude -p "/usage"` devuelve `Unknown command: /usage`. Por eso la ruta mas confiable hoy pasa por `rate_limits` en status line y no por ese slash command en modo `-p`.
 
 ### Implicacion de diseño
 
 La capa de aplicacion debe poder combinar dos fuentes distintas:
 
 - `filesystem telemetry` para sesion, tareas y pasos recientes
-- `headless CLI usage` para cuota y porcentajes
+- `exact usage providers` para cuota y porcentajes
 
-Por eso la siguiente implementacion no deberia incrustar esta logica dentro de `ClaudeFilesystemActivityRepository`; conviene modelarla como un puerto separado y fusionarla en el caso de uso o en un agregador de infraestructura.
+Por eso la implementacion no incrusta esta logica dentro de `ClaudeFilesystemActivityRepository`; se modela como un puerto separado y se fusiona en el caso de uso.
 
 ## Extension natural
 

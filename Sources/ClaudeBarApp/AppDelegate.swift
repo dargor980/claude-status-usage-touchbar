@@ -24,7 +24,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
             fileURL: AppDelegate.resolveConfigurationURL(),
             fallback: DefaultUsagePolicyProvider()
         )
-        let useCase = ObserveClaudeBarSnapshotUseCase(repository: repository, usagePolicyProvider: policyProvider)
+        let usageProvider = CompositeClaudeUsageProvider(
+            providers: [
+                ClaudeStatusLineUsageProvider(fileURL: AppDelegate.resolveStatusLineCaptureURL()),
+                ClaudeHeadlessCLIUsageProvider(),
+            ]
+        )
+        let useCase = ObserveClaudeBarSnapshotUseCase(
+            repository: repository,
+            usagePolicyProvider: policyProvider,
+            usageProvider: usageProvider
+        )
         let viewModel = ClaudeBarViewModel(useCase: useCase)
 
         self.viewModel = viewModel
@@ -157,5 +167,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
 
         let currentDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         return currentDirectory.appendingPathComponent("claudebar.config.json")
+    }
+
+    private static func resolveStatusLineCaptureURL() -> URL {
+        let environment = ProcessInfo.processInfo.environment
+
+        if let overriddenPath = environment["CLAUDEBAR_STATUSLINE_CAPTURE_PATH"], !overriddenPath.isEmpty {
+            return URL(fileURLWithPath: overriddenPath)
+        }
+
+        return ClaudeFilesystemPaths.default().statusLineCaptureURL
     }
 }
