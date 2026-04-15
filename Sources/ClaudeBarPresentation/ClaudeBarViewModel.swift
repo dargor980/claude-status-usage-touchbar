@@ -1,23 +1,28 @@
 import Foundation
-import Observation
 import ClaudeBarApplication
 import ClaudeBarDomain
 
 @MainActor
 public final class ClaudeBarViewModel: ObservableObject {
     @Published public private(set) var snapshot: ClaudeBarSnapshot
+    @Published public private(set) var touchBarExperience: TouchBarExperienceSnapshot
 
     private let useCase: ObserveClaudeBarSnapshotUseCase
+    private let touchBarExperienceUseCase: EvaluateTouchBarExperienceUseCase
     private let refreshIntervalNanoseconds: UInt64
     private var pollingTask: Task<Void, Never>?
 
     public init(
         useCase: ObserveClaudeBarSnapshotUseCase,
         initialSnapshot: ClaudeBarSnapshot = .empty(),
+        touchBarExperienceUseCase: EvaluateTouchBarExperienceUseCase = .init(),
+        initialTouchBarExperience: TouchBarExperienceSnapshot = .empty(),
         refreshIntervalSeconds: UInt64 = 2
     ) {
         self.useCase = useCase
         self.snapshot = initialSnapshot
+        self.touchBarExperienceUseCase = touchBarExperienceUseCase
+        self.touchBarExperience = initialTouchBarExperience
         self.refreshIntervalNanoseconds = refreshIntervalSeconds * 1_000_000_000
     }
 
@@ -64,5 +69,9 @@ public final class ClaudeBarViewModel: ObservableObject {
                 notices: ["No se pudo refrescar la telemetria: \(error.localizedDescription)"]
             )
         }
+    }
+
+    public func updateTouchBarExperience(frontmostApplication: FrontmostApplicationSnapshot) {
+        touchBarExperience = touchBarExperienceUseCase.execute(frontmostApplication: frontmostApplication)
     }
 }

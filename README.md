@@ -26,10 +26,22 @@ The MVP focuses on four things:
 Claude Code exposes valuable runtime context, but not in a form that is instantly visible while coding. The goal of claudeBar is to reduce that friction and test whether a glanceable, native macOS companion is enough to make Claude usage feel more operational and less opaque.
 
 > [!NOTE]
-> The current version does **not** reproduce the exact `/usage` percentage shown by Claude. It estimates usage from locally observed token data and configurable budgets because Claude does not expose a stable local source for the exact percentage.
+> The app now supports an exact-usage path when it can read a local `rate_limits` capture from Claude Code status line scripts. If that source is missing or invalid, it falls back to estimated usage from local token telemetry and configured budgets.
 
 > [!WARNING]
 > The app currently uses public `AppKit` APIs for Touch Bar support. That means the Touch Bar UI is tied to the app lifecycle and does not yet provide a guaranteed persistent bar while another app such as VS Code is in the foreground.
+
+> [!IMPORTANT]
+> The chosen Phase 2 direction is to keep the current `AppKit` Touch Bar as an internal fallback and deliver persistent visibility through a third-party Touch Bar host, starting with `BetterTouchTool`, while `claudeBar` remains the telemetry and action source.
+
+> [!TIP]
+> The app now writes a local Touch Bar bridge payload to `~/.claude/claudebar-touchbar.json`. Use the helper scripts in `scripts/` to wire that payload into BetterTouchTool widgets.
+
+> [!TIP]
+> If you configure BetterTouchTool widget UUIDs through `CLAUDEBAR_BTT_TITLE_WIDGET_UUID` and `CLAUDEBAR_BTT_TASK_WIDGET_UUID`, the app can also push direct widget updates on every refresh instead of relying only on shell-script polling.
+
+> [!TIP]
+> Run `python3 scripts/claudebar_btt_generate_preset.py` to generate a ready-to-import `claudebar.bttpreset` with canonical widget UUIDs. Import the preset in BetterTouchTool and launch claudeBar — no env var setup required. Use `bash scripts/claudebar_install.sh` to register claudeBar as a login item.
 
 ## Getting Started
 
@@ -51,10 +63,12 @@ SWIFTPM_MODULECACHE_OVERRIDE=$PWD/.build/module-cache \
 ### Run
 
 ```bash
-open .build/scratch/arm64-apple-macosx/debug/claudebar
+.build/scratch/arm64-apple-macosx/debug/claudebar
 ```
 
 The app launches as a small native companion with a dashboard window, a status bar item, and a Touch Bar provider backed by the same snapshot state.
+
+By default the dashboard no longer auto-opens on launch. It behaves as a menubar companion unless you set `CLAUDEBAR_OPEN_DASHBOARD_ON_LAUNCH=1`.
 
 ## Configuration
 
@@ -83,6 +97,8 @@ claudeBar reads from local Claude files instead of scraping UI output:
 
 The repository converts those sources into a single `ClaudeBarSnapshot`, which the app refreshes on a short polling interval and renders consistently across the desktop panel and Touch Bar UI.
 
+For more exact usage, the app can also read `~/.claude/claudebar-statusline.json` when you wire Claude Code status line to the helper script at [scripts/claudebar_statusline_capture.py](/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_statusline_capture.py:1). The capture path can be overridden with `CLAUDEBAR_STATUSLINE_CAPTURE_PATH`.
+
 ## Architecture
 
 The codebase is intentionally split by responsibility:
@@ -99,9 +115,12 @@ This structure keeps the parsing logic independent from the UI and leaves space 
 
 This is an MVP, not a finished utility. The current version validates the shape of the product and the viability of the local telemetry approach. The biggest open technical questions are:
 
-- how to deliver a truly persistent Touch Bar experience while another app owns focus
 - how to replace estimated usage with a more exact source of quota data
 - how to harden the local parsers with fixture-driven integration coverage
+
+The Touch Bar direction is now defined at the architecture level: bridge `claudeBar` into an external Touch Bar controller instead of pursuing a private API implementation inside the app.
+
+As of `Claude Code 2.1.108` on April 15, 2026, `claude -p "/usage"` returns `Unknown command: /usage` in this environment, so the current exact-usage integration prefers status line `rate_limits` capture and keeps the headless `/usage` probe as an experimental fallback.
 
 ## Roadmap
 
@@ -118,6 +137,8 @@ See the supporting design docs for the detailed breakdown:
 - [Data Model](./docs/DATA_MODEL.md)
 - [Contracts](./docs/CONTRACTS.md)
 - [Technical Roadmap](./docs/ROADMAP.md)
+- [Touch Bar Strategy](./docs/TOUCH_BAR_STRATEGY.md)
+- [BetterTouchTool Setup](./docs/BETTER_TOUCH_TOOL_SETUP.md)
 
 ## Development Notes
 

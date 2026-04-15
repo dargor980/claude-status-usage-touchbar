@@ -18,9 +18,9 @@ Objetivo: acercar el comportamiento al requisito de “visible mientras VS Code 
 
 Historias:
 
-1. Evaluar integracion con Touch Bar persistente sin depender de foco de ventana.
-2. Comparar tres rutas: API privada experimental, companion app con automatizacion, o integracion con herramienta de terceros.
-3. Mantener el contrato del dominio estable para no tocar la UI al cambiar la estrategia.
+1. Evaluar integracion con Touch Bar persistente sin depender de foco de ventana. Estado: resuelto. `AppKit` publico queda como fallback, no como solucion persistente.
+2. Comparar tres rutas: API privada experimental, companion app con automatizacion, o integracion con herramienta de terceros. Estado: resuelto. Se recomienda herramienta de terceros con bridge; API privada descartada; companion postergado como patron interno.
+3. Mantener el contrato del dominio estable para no tocar la UI al cambiar la estrategia. Estado: en curso. La UI interna conserva `ClaudeBarSnapshot` y la estrategia Touch Bar se modela por separado.
 
 ## Fase 3. Precisión de uso
 
@@ -28,10 +28,10 @@ Objetivo: acercar el porcentaje a la realidad de Claude.
 
 Historias:
 
-1. Ejecutar `claude -p "/usage"` desde `claudeBar` en modo headless para consultar la cuota actual.
-2. Capturar y parsear `stdout` con `Regex` para extraer porcentaje de sesion, porcentaje semanal y resets.
-3. Reemplazar la politica de presupuestos por la salida de la CLI cuando el parseo sea valido.
-4. Registrar fallback a `estimated` cuando la CLI falle o cambie de formato.
+1. Ejecutar `claude -p "/usage"` desde `claudeBar` en modo headless para consultar la cuota actual. Estado: parcial. La sonda existe, pero en `Claude Code 2.1.108` del 15 de abril de 2026 el comando devuelve `Unknown command: /usage` en este entorno.
+2. Capturar y parsear `stdout` con `Regex` para extraer porcentaje de sesion, porcentaje semanal y resets. Estado: implementado como parser tolerante para futuras salidas textuales o JSON.
+3. Reemplazar la politica de presupuestos por la salida de la CLI cuando el parseo sea valido. Estado: implementado para cualquier fuente exacta valida; la app hoy prioriza captura de `rate_limits` desde status line.
+4. Registrar fallback a `estimated` cuando la CLI falle o cambie de formato. Estado: implementado.
 
 ## Fase 4. Producto utilizable
 

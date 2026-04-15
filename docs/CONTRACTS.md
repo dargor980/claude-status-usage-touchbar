@@ -32,15 +32,15 @@ Caso de uso que transforma actividad + politica en un `ClaudeBarSnapshot` listo 
 
 ## Contrato propuesto para usage exacto
 
-La siguiente iteracion deberia introducir un puerto separado para consultar cuota real desde la CLI:
+La implementacion actual introduce un puerto separado para consultar cuota real desde fuentes exactas:
 
 ### `ClaudeUsageProvider`
 
 Responsabilidad:
 
-- ejecutar `claude -p "/usage"` en modo headless
-- capturar `stdout`
-- parsear los datos relevantes del texto devuelto
+- leer una captura local de `rate_limits` cuando exista
+- intentar `claude -p "/usage"` como sonda experimental
+- degradar a `estimated` cuando ninguna fuente exacta sea valida
 
 Salida sugerida:
 
@@ -57,13 +57,42 @@ Salida sugerida:
 
 Implementacion esperada:
 
+- `ClaudeStatusLineUsageProvider`
 - `ClaudeHeadlessCLIUsageProvider`
+- `CompositeClaudeUsageProvider`
 
 Notas:
 
-- no existe hoy un `--json` nativo para este comando
-- el parseo debe encapsularse para tolerar cambios de formato
+- en `Claude Code 2.1.108` del 15 de abril de 2026, `claude -p "/usage"` devuelve `Unknown command: /usage` en este entorno
+- Claude Code expone `rate_limits` a scripts de `statusline` desde la serie `2.1.80+`
+- el parseo textual sigue encapsulado para tolerar cambios de formato
 - si el parseo falla, la app debe poder degradar a `estimated`
+
+## Contrato de captura local para status line
+
+Archivo por defecto:
+
+`~/.claude/claudebar-statusline.json`
+
+Payload esperado:
+
+```json
+{
+  "updated_at": "2026-04-15T03:30:00Z",
+  "model": "claude-sonnet-4-6",
+  "session_id": "746b1d28-ab35-4153-ad37-75dc6c151a82",
+  "rate_limits": {
+    "five_hour": {
+      "used_percentage": 42,
+      "resets_at": 1776204000
+    },
+    "seven_day": {
+      "used_percentage": 61,
+      "resets_at": 1776603600
+    }
+  }
+}
+```
 
 ## Contrato de configuracion local
 
@@ -112,3 +141,17 @@ Respuesta sugerida para `GET /v1/status`:
 En esta version propuesta, el bloque `usage` deberia obtenerse preferentemente desde `claude -p "/usage"` y no desde inferencia por tokens.
 
 Fase 1 no implementa servidor HTTP; solo deja definido el contrato para desacoplar una futura extraccion de proceso.
+
+## Contrato de fase 2 para estrategia Touch Bar
+
+La evaluacion de Touch Bar persistente no debe expandir `ClaudeBarSnapshot`. En su lugar usa un contrato separado de aplicacion:
+
+- `FrontmostApplicationSnapshot`: identifica la app que hoy esta al frente
+- `TouchBarRouteAssessment`: compara rutas candidatas para persistencia
+- `TouchBarExperienceSnapshot`: resume modo actual, recomendacion y siguiente corte
+
+Responsabilidad:
+
+- exponer decision tecnica sin acoplarla al dominio
+- permitir que la UI nativa muestre el estado de la estrategia
+- dejar listo el reemplazo del renderer Touch Bar sin reescribir gauges, sesion o tarea

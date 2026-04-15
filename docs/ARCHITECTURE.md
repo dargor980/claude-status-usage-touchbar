@@ -40,39 +40,68 @@ Separar estas fuentes evita mezclar concernes de cuota, sesion y task tracking.
 - La Touch Bar usa solo API publica de AppKit. Eso permite compilar y probar hoy, aunque no cubre todavia el caso “visible mientras VS Code esta al frente”.
 - El refresco es por polling simple. Cambiar a `FSEvents` o `DispatchSourceFileSystemObject` queda para una segunda iteracion si la frecuencia de 2 segundos no basta.
 
-## Fuente de usage aprobada para la siguiente iteracion
+## Decision de fase 2 para Touch Bar persistente
 
-La estrategia aprobada para consultar el `usage` real ya no sera inferirlo solo desde archivos locales. La siguiente fuente oficial a integrar sera:
+La comparacion tecnica de fase 2 deja una conclusion clara:
 
-- ejecutar `claude -p "/usage"` desde la app en modo headless
-- capturar el texto de `stdout`
-- extraer porcentaje de sesion, porcentaje semanal y ventanas de reset mediante `Regex`
+- `AppKit` publico se mantiene como espejo interno y fallback.
+- API privada experimental queda descartada por riesgo de plataforma y mantenibilidad.
+- companion app con automatizacion queda como patron de bridge, no como renderer final.
+- la siguiente implementacion persistente debe integrarse con una herramienta de terceros que ya controle la Touch Bar, empezando por `BetterTouchTool`.
 
-Esto implica un nuevo adaptador de infraestructura, por ejemplo `ClaudeHeadlessUsageProvider`, aislado del resto del parser de filesystem.
+La consecuencia arquitectonica es simple: `claudeBar` pasa a ser proveedor de estado para dos superficies:
+
+- UI nativa propia
+- host persistente externo de Touch Bar
+
+El contrato de dominio no cambia. Lo que cambia es el adaptador de salida.
+
+Ver detalle en [TOUCH_BAR_STRATEGY.md](./TOUCH_BAR_STRATEGY.md).
+
+### Corte implementado
+
+La primera implementacion concreta del host externo usa un bridge por archivo con push opcional:
+
+- `claudeBar` escribe `~/.claude/claudebar-touchbar.json`
+- `BetterTouchTool` puede consumir ese payload via widgets de shell script
+- si el operador configura UUIDs de widgets, `claudeBar` tambien puede empujar updates directos con el bridge oficial de scripting de BetterTouchTool
+- las acciones del widget leen el mismo payload para abrir `Resume`
+
+Eso mantiene un fallback estable por archivo y deja el update directo como optimizacion opcional, no como dependencia estructural.
+
+## Fuente de usage implementada para la siguiente iteracion
+
+La app ahora intenta una fuente exacta separada del parser de filesystem. La prioridad actual es:
+
+1. leer una captura local de `rate_limits` generada por un script de `statusline`
+2. intentar `claude -p "/usage"` como sonda experimental
+3. degradar a porcentajes estimados por politica cuando ninguna fuente exacta es valida
+
+Esto mantiene el adaptador de usage aislado del parser de filesystem y evita mezclar telemetria observada con cuota exacta.
 
 ### Motivacion
 
-- usa la propia CLI de Claude Code como fuente de verdad operativa
+- usa una superficie oficial reciente de Claude Code para `rate_limits`
 - evita seguir adivinando el porcentaje desde tokens acumulados
 - mantiene a `claudeBar` desacoplado de una UI visual o scraping de pantalla
 
 ### Limitacion conocida
 
-Hoy el comando no expone un `--json` nativo para este caso, por lo que el parseo sera necesariamente textual y debe considerarse fragil ante cambios de formato.
+En esta maquina, con `Claude Code 2.1.108` del 15 de abril de 2026, `claude -p "/usage"` devuelve `Unknown command: /usage`. Por eso la ruta mas confiable hoy pasa por `rate_limits` en status line y no por ese slash command en modo `-p`.
 
 ### Implicacion de diseño
 
 La capa de aplicacion debe poder combinar dos fuentes distintas:
 
 - `filesystem telemetry` para sesion, tareas y pasos recientes
-- `headless CLI usage` para cuota y porcentajes
+- `exact usage providers` para cuota y porcentajes
 
-Por eso la siguiente implementacion no deberia incrustar esta logica dentro de `ClaudeFilesystemActivityRepository`; conviene modelarla como un puerto separado y fusionarla en el caso de uso o en un agregador de infraestructura.
+Por eso la implementacion no incrusta esta logica dentro de `ClaudeFilesystemActivityRepository`; se modela como un puerto separado y se fusiona en el caso de uso.
 
 ## Extension natural
 
 Si la idea valida, el siguiente corte tecnico es extraer un `ClaudeBarAgent` local que entregue un contrato estable a la UI y permita integrar:
 
 - una fuente mas exacta de cuotas basada en `claude -p "/usage"`
-- una estrategia persistente para Touch Bar
+- una estrategia persistente para Touch Bar via bridge externo
 - pruebas de integracion independientes de AppKit
