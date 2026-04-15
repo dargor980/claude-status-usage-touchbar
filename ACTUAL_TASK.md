@@ -37,7 +37,15 @@ Implementar un bridge utilizable con `BetterTouchTool`, manteniendo a `claudeBar
 
 - `Fase 1` funcional: completada
 - `Fase 2` Touch Bar persistente: completada a nivel de decision tecnica
-- `Fase 2.1` bridge BetterTouchTool: en implementacion
+- `Fase 2.1` bridge BetterTouchTool: completada
+- bridge por archivo: implementado
+- scripts de widget y accion para BetterTouchTool: implementados
+- update directo opcional por UUID de widget: implementado
+- `Fase 2.2` simplificacion de setup: completada
+- preset `.bttpreset` generado por script con UUIDs canonicos: implementado
+- `claudeBar` usa UUIDs canonicos por defecto sin env vars: implementado
+- login item via launchd (`claudebar_install.sh`): implementado
 - `Fase 3` usage exacto: postergada
 - limitacion actual: la Touch Bar publica de `AppKit` solo aparece cuando `claudeBar` es la app enfocada
 - ruta elegida: `BetterTouchTool` leyendo un payload local generado por `claudeBar`
+- siguiente corte probable: packaging como `.app` o validacion manual del preset en BTT real

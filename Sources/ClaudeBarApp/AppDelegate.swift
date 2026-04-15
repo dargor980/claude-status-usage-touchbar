@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
     private let viewModel: ClaudeBarViewModel
     private let touchBarController: TouchBarController
     private let touchBarBridgeWriter: TouchBarBridgeFileWriter
+    private let betterTouchToolWidgetUpdater: BetterTouchToolWidgetUpdater?
     private let frontmostApplicationMonitor: WorkspaceFrontmostApplicationMonitor
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var cancellables: Set<AnyCancellable> = []
@@ -46,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         self.touchBarBridgeWriter = TouchBarBridgeFileWriter(
             fileURL: AppDelegate.resolveTouchBarBridgeURL()
         )
+        self.betterTouchToolWidgetUpdater = AppDelegate.makeBetterTouchToolWidgetUpdater()
         self.frontmostApplicationMonitor = WorkspaceFrontmostApplicationMonitor()
 
         super.init()
@@ -55,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
             .sink { [weak self] snapshot in
                 self?.touchBarController.update(snapshot: snapshot)
                 try? self?.touchBarBridgeWriter.write(snapshot: snapshot)
+                try? self?.betterTouchToolWidgetUpdater?.refresh(snapshot: snapshot)
             }
             .store(in: &cancellables)
 
@@ -197,5 +200,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTouchBarProvider {
         }
 
         return ClaudeFilesystemPaths.default().touchBarBridgeURL
+    }
+
+    private static func makeBetterTouchToolWidgetUpdater() -> BetterTouchToolWidgetUpdater? {
+        let environment = ProcessInfo.processInfo.environment
+
+        // Fall back to the canonical preset UUIDs so that importing
+        // claudebar.bttpreset is sufficient — no env var config required.
+        let titleUUID = environment["CLAUDEBAR_BTT_TITLE_WIDGET_UUID"]
+            ?? BetterTouchToolWidgetUpdater.canonicalTitleWidgetUUID
+        let taskUUID = environment["CLAUDEBAR_BTT_TASK_WIDGET_UUID"]
+            ?? BetterTouchToolWidgetUpdater.canonicalTaskWidgetUUID
+
+        return BetterTouchToolWidgetUpdater(
+            titleWidgetUUID: titleUUID,
+            taskWidgetUUID: taskUUID
+        )
     }
 }

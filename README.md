@@ -37,6 +37,12 @@ Claude Code exposes valuable runtime context, but not in a form that is instantl
 > [!TIP]
 > The app now writes a local Touch Bar bridge payload to `~/.claude/claudebar-touchbar.json`. Use the helper scripts in `scripts/` to wire that payload into BetterTouchTool widgets.
 
+> [!TIP]
+> If you configure BetterTouchTool widget UUIDs through `CLAUDEBAR_BTT_TITLE_WIDGET_UUID` and `CLAUDEBAR_BTT_TASK_WIDGET_UUID`, the app can also push direct widget updates on every refresh instead of relying only on shell-script polling.
+
+> [!TIP]
+> Run `python3 scripts/claudebar_btt_generate_preset.py` to generate a ready-to-import `claudebar.bttpreset` with canonical widget UUIDs. Import the preset in BetterTouchTool and launch claudeBar — no env var setup required. Use `bash scripts/claudebar_install.sh` to register claudeBar as a login item.
+
 ## Getting Started
 
 ### Requirements
@@ -57,7 +63,7 @@ SWIFTPM_MODULECACHE_OVERRIDE=$PWD/.build/module-cache \
 ### Run
 
 ```bash
-open .build/scratch/arm64-apple-macosx/debug/claudebar
+.build/scratch/arm64-apple-macosx/debug/claudebar
 ```
 
 The app launches as a small native companion with a dashboard window, a status bar item, and a Touch Bar provider backed by the same snapshot state.

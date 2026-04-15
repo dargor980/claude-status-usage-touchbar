@@ -60,13 +60,14 @@ Ver detalle en [TOUCH_BAR_STRATEGY.md](./TOUCH_BAR_STRATEGY.md).
 
 ### Corte implementado
 
-La primera implementacion concreta del host externo usa un bridge por archivo:
+La primera implementacion concreta del host externo usa un bridge por archivo con push opcional:
 
 - `claudeBar` escribe `~/.claude/claudebar-touchbar.json`
-- `BetterTouchTool` consume ese payload via widgets de shell script
+- `BetterTouchTool` puede consumir ese payload via widgets de shell script
+- si el operador configura UUIDs de widgets, `claudeBar` tambien puede empujar updates directos con el bridge oficial de scripting de BetterTouchTool
 - las acciones del widget leen el mismo payload para abrir `Resume`
 
-Eso permite avanzar sin acoplar la app a AppleScript o UUIDs de widgets especificos.
+Eso mantiene un fallback estable por archivo y deja el update directo como optimizacion opcional, no como dependencia estructural.
 
 ## Fuente de usage implementada para la siguiente iteracion
 

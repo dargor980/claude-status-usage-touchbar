@@ -1,0 +1,36 @@
+[
+  {
+    "BTTTriggerType": 642,
+    "BTTTriggerClass": "BTTTriggerTypeTouchBar",
+    "BTTPredefinedActionType": 206,
+    "BTTPredefinedActionName": "Run Shell Script / Task",
+    "BTTShellTaskActionScript": "/usr/bin/python3 /Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_btt_action.py resume",
+    "BTTTouchBarButtonName": "claudeBar ⟳",
+    "BTTTouchBarButtonColor": "75, 75, 75, 255.000000",
+    "BTTTouchBarAlwaysShowButton": 0,
+    "BTTEnabled2": 1,
+    "BTTEnabled": 1,
+    "BTTUUID": "CB000001-CB00-CB00-CB00-CB0000000001",
+    "BTTRefreshInterval": 2,
+    "BTTOrder": 0,
+    "BTTDisplayOrder": 0,
+    "BTTRequiredModifierKeys": []
+  },
+  {
+    "BTTTriggerType": 642,
+    "BTTTriggerClass": "BTTTriggerTypeTouchBar",
+    "BTTPredefinedActionType": -1,
+    "BTTPredefinedActionName": "No Action",
+    "BTTShellTaskActionScript": "/usr/bin/python3 /Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_btt_widget.py task",
+    "BTTTouchBarButtonName": "⟳",
+    "BTTTouchBarButtonColor": "50, 50, 50, 255.000000",
+    "BTTTouchBarAlwaysShowButton": 0,
+    "BTTEnabled2": 1,
+    "BTTEnabled": 1,
+    "BTTUUID": "CB000001-CB00-CB00-CB00-CB0000000002",
+    "BTTRefreshInterval": 2,
+    "BTTOrder": 1,
+    "BTTDisplayOrder": 1,
+    "BTTRequiredModifierKeys": []
+  }
+]
