@@ -395,52 +395,75 @@ public struct TouchBarStripView: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
-            miniMeter(snapshot.currentSession)
-            miniMeter(snapshot.currentWeek)
-
-            Button(action: onResume) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(buttonTitle)
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-
-                    Text(buttonSubtitle)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
+        HStack(spacing: 8) {
+            gaugeChip(snapshot.currentSession)
+            gaugeChip(snapshot.currentWeek)
+            Spacer(minLength: 4)
+            resumeChip
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color(red: 0.92, green: 0.95, blue: 0.98))
+        .padding(.horizontal, 8)
+        // Clear background so the Touch Bar's native dark surface shows through.
+        .background(Color.clear)
     }
 
-    private func miniMeter(_ gauge: UsageGauge) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    // MARK: - Gauge chip
+
+    private func gaugeChip(_ gauge: UsageGauge) -> some View {
+        HStack(spacing: 5) {
             Text(gauge.title)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-            ProgressView(value: gauge.clampedPercentage)
-                .frame(width: 120)
-            Text(gauge.clampedPercentage.formatted(.percent.precision(.fractionLength(0))))
                 .font(.system(size: 10, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.6))
+
+            miniBar(gauge.clampedPercentage)
+
+            Text(gauge.clampedPercentage.formatted(.percent.precision(.fractionLength(0))))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(percentColor(gauge.clampedPercentage))
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private var buttonTitle: String {
-        guard let task = snapshot.task else { return "Resume" }
-        return task.state == .running ? "Resume: \(task.title)" : "Done"
+    private func miniBar(_ value: Double) -> some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.white.opacity(0.15))
+                .frame(width: 36, height: 4)
+            RoundedRectangle(cornerRadius: 2)
+                .fill(percentColor(value))
+                .frame(width: max(2, 36 * value), height: 4)
+        }
     }
 
-    private var buttonSubtitle: String {
-        guard let task = snapshot.task else { return "Abrir panel" }
-        return task.detail ?? "Abrir panel"
+    private func percentColor(_ value: Double) -> Color {
+        if value >= 0.85 { return Color(red: 1.0, green: 0.35, blue: 0.35) }
+        if value >= 0.65 { return Color(red: 1.0, green: 0.80, blue: 0.25) }
+        return Color(red: 0.35, green: 0.85, blue: 0.55)
+    }
+
+    // MARK: - Resume chip
+
+    private var resumeChip: some View {
+        Button(action: onResume) {
+            HStack(spacing: 4) {
+                Text(resumeLabel)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.13), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var resumeLabel: String {
+        if let task = snapshot.task, task.state == .running {
+            let title = task.title
+            return title.count > 22 ? String(title.prefix(22)) + "..." : title
+        }
+        return snapshot.session != nil ? "Resume" : "claudeBar"
     }
 }
