@@ -52,3 +52,5 @@ Implementar un bridge utilizable con `BetterTouchTool`, manteniendo a `claudeBar
 - `build-app-bundle.sh` incluye scripts Python, preset, `LSUIElement` y `NSAppleEventsUsageDescription`
 - `claudebar_install.sh` crea bundle + launchd agent en un paso
 - siguiente corte: validacion manual del preset y flujo completo en BetterTouchTool real
+- PR feat/real-ux-touchbar: listo para abrir (branch pusheado, gh CLI no disponible)
+- proxima fase implementable: Fase 4.4 logs y diagnostico para sesiones no detectadas
