@@ -43,14 +43,18 @@ def main() -> None:
     widget_py = str(scripts_dir / "claudebar_btt_widget.py")
     action_py = str(scripts_dir / "claudebar_btt_action.py")
 
-    title_sh  = _write_wrapper(scripts_dir, "claudebar_mtmr_title.sh",
-                               f"/usr/bin/python3 {widget_py} title")
-    task_sh   = _write_wrapper(scripts_dir, "claudebar_mtmr_task.sh",
-                               f"/usr/bin/python3 {widget_py} task")
-    resume_sh = _write_wrapper(scripts_dir, "claudebar_mtmr_resume.sh",
-                               f"/usr/bin/python3 {action_py} resume")
+    title_sh      = _write_wrapper(scripts_dir, "claudebar_mtmr_title.sh",
+                                   f"/usr/bin/python3 {widget_py} title")
+    session_pct_sh = _write_wrapper(scripts_dir, "claudebar_mtmr_session_pct.sh",
+                                    f"/usr/bin/python3 {widget_py} session_pct")
+    week_pct_sh   = _write_wrapper(scripts_dir, "claudebar_mtmr_week_pct.sh",
+                                   f"/usr/bin/python3 {widget_py} week_pct")
+    task_sh       = _write_wrapper(scripts_dir, "claudebar_mtmr_task.sh",
+                                   f"/usr/bin/python3 {widget_py} task")
+    resume_sh     = _write_wrapper(scripts_dir, "claudebar_mtmr_resume.sh",
+                                   f"/usr/bin/python3 {action_py} resume")
 
-    claudebar_items = _build_items(title_sh, task_sh, resume_sh)
+    claudebar_items = _build_items(session_pct_sh, week_pct_sh, task_sh, resume_sh)
 
     # Always write the standalone snippet.
     out = Path(__file__).parent.parent / "claudebar-mtmr.json"
@@ -119,26 +123,38 @@ def _write_wrapper(scripts_dir: Path, name: str, command: str) -> str:
     return str(path)
 
 
-def _build_items(title_sh: str, task_sh: str, resume_sh: str) -> list:
+def _build_items(
+    session_pct_sh: str,
+    week_pct_sh: str,
+    task_sh: str,
+    resume_sh: str,
+) -> list:
+    base = {"refreshInterval": 2, "bordered": False}
     return [
         {
-            "_comment": "claudeBar — usage title + resume action",
+            **base,
+            "_comment": "claudeBar — session usage (tap = resume)",
             "type": "shellScriptTitledButton",
-            "source": {"filePath": title_sh},
-            "refreshInterval": 2,
-            "align": "left",
-            "width": 220,
-            "bordered": False,
+            "source": {"filePath": session_pct_sh},
+            "align": "center",
+            "width": 90,
             "action": {"type": "shellScript", "filePath": resume_sh},
         },
         {
+            **base,
+            "_comment": "claudeBar — weekly usage",
+            "type": "shellScriptTitledButton",
+            "source": {"filePath": week_pct_sh},
+            "align": "center",
+            "width": 90,
+        },
+        {
+            **base,
             "_comment": "claudeBar — current task",
             "type": "shellScriptTitledButton",
             "source": {"filePath": task_sh},
-            "refreshInterval": 2,
             "align": "left",
-            "width": 200,
-            "bordered": False,
+            "width": 180,
         },
     ]
 

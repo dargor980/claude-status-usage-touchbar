@@ -1,28 +1,39 @@
 [
   {
-    "_comment": "claudeBar — usage title + resume action",
+    "refreshInterval": 2,
+    "bordered": false,
+    "_comment": "claudeBar — session usage (tap = resume)",
     "type": "shellScriptTitledButton",
     "source": {
-      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_title.sh"
+      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_session_pct.sh"
     },
-    "refreshInterval": 2,
-    "align": "left",
-    "width": 220,
-    "bordered": false,
+    "align": "center",
+    "width": 90,
     "action": {
       "type": "shellScript",
       "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_resume.sh"
     }
   },
   {
+    "refreshInterval": 2,
+    "bordered": false,
+    "_comment": "claudeBar — weekly usage",
+    "type": "shellScriptTitledButton",
+    "source": {
+      "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_week_pct.sh"
+    },
+    "align": "center",
+    "width": 90
+  },
+  {
+    "refreshInterval": 2,
+    "bordered": false,
     "_comment": "claudeBar — current task",
     "type": "shellScriptTitledButton",
     "source": {
       "filePath": "/Users/germancontreras/claude-status-usage-touchbar/scripts/claudebar_mtmr_task.sh"
     },
-    "refreshInterval": 2,
     "align": "left",
-    "width": 200,
-    "bordered": false
+    "width": 180
   }
 ]

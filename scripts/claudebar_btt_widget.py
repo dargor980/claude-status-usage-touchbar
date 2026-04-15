@@ -31,7 +31,17 @@ def main():
         return
 
     if mode == "task":
-        print(payload.get("compactTask") or "claudeBar · sin tarea")
+        print(payload.get("compactTask") or "sin tarea")
+        return
+
+    if mode == "session_pct":
+        gauge = payload.get("currentSession") or {}
+        print(gauge.get("percentageLabel") or "--")
+        return
+
+    if mode == "week_pct":
+        gauge = payload.get("currentWeek") or {}
+        print(gauge.get("percentageLabel") or "--")
         return
 
     if mode == "session":
@@ -43,7 +53,9 @@ def main():
         print(json.dumps(payload))
         return
 
-    print(payload.get("compactTitle") or "claudeBar --")
+    # "title" mode — strip app-name prefix for compact display
+    title = payload.get("compactTitle") or "claudeBar --"
+    print(title.replace("claudeBar ", "", 1))
 
 
 if __name__ == "__main__":
